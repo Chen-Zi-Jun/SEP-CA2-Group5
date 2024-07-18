@@ -1,0 +1,11 @@
+.heart-icon {
+    font-size: 100%; /* Adjust heart size */
+    cursor: pointer;
+    transition: color 0.3s ease;
+    color: black; /* Default colour */
+
+}
+
+.heart-icon.favorited {
+    color: red; /* Color when favorited */
+}

@@ -1,0 +1,150 @@
+<script src="../checkCountry.js"></script>
+<html>
+<script src="../../header.js"></script>
+<!-- <link rel="stylesheet" type="text/css" href="/view/B/css/heart.css"> -->
+<style>
+    .heart-icon {
+        font-size: 30px;
+        /* Adjust heart size */
+        cursor: pointer;
+        transition: color 0.3s ease;
+        color: black;
+        /* Default colour */
+        vertical-align: middle;
+        margin-left: 20px;
+        /* Adjust margin 150px */
+    }
+
+    .heart-icon.favorited {
+        color: rgb(255, 0, 0);
+        /* Color when favorited */
+    }
+
+</style>
+
+<body>
+    <script>
+        var countryPrefix = localStorage.getItem('urlPrefix');
+        //get category from query parameter
+        var currentUrl = new URL(window.location.href);
+        var cat = currentUrl.searchParams.get("cat");
+        var countryId = localStorage.getItem('countryId');
+        fetch(new Request('/api/getRetailProductByCat?cat=' + encodeURIComponent(cat) + '&countryId=' + countryId,
+            {
+                method: 'GET'
+            })).then(function (response) {
+                return response.json();
+            }).then(function (data) {
+                var htmlTxt = '';
+
+                var product = data[0];
+                // data.forEach(function (product) {
+
+                    //generate html for retail products
+                    htmlTxt += '\
+                            <li class="col-md-3 col-sm-6 col-xs-12 product" style="padding-bottom: 1%; padding-top: 2%;">\
+                                <span class="product-thumb-info">\
+                                    <span class="product-thumb-info-image">\
+                                        <span class="product-thumb-info-act">\
+                                            <span class="product-thumb-info-act-left">\
+                                                <a href="/B/' + countryPrefix + '/retailProductDetails.html?sku=' + product.sku + '" style="color: white"><em>View Details</em></a>\
+                                            </span>\
+                                        </span>\
+                                        <img alt="" class="img-responsive" src="' + product.imageURL + '">\
+                                    </span>\
+                                    <span class="product-thumb-info-content">\
+                                        <h4>' + product.name + '<span class="heart-icon" style="cursor: pointer;" data-sku="' + product.sku + '">&#x2764;</span></h4>\
+                                        <span class="product-thumb-info-act-left">\
+                                            <em>Price: $' + product.price + '.00</em>\
+                                        </span><br/>\
+                                        <form action="retailProductDetails.html">\
+                                            <input type="hidden" name="sku" value="' + product.sku + '"/>\
+                                            <input type="submit" class="btn btn-primary btn-block" value="More Details"/>\
+                                        </form>\
+                                    </span>\
+                                </span>\
+                            </li>';
+                // })
+                document.getElementById("retailProductsDisplay").innerHTML = htmlTxt;
+                document.getElementById("categoryTitle").innerHTML = cat;
+
+                // Add event listeners to heart icons
+                var heartIcons = document.querySelectorAll('.heart-icon');
+                heartIcons.forEach(function (icon, index) {
+                    icon.addEventListener('click', function () {
+                        this.style.color = this.style.color === 'red' ? 'black' : 'red';
+                        toggleFavorite(data[index]);
+                    });
+
+                    // Set the initial color of the heart icon based on whether the product is favorited
+                    let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+                    if (favorites.findIndex(fav => fav.sku === data[index].sku) !== -1) {
+                        icon.style.color = 'red';
+                    }
+                });
+                // });
+
+            }).catch(function (error) {
+                console.log(error);
+            });
+
+        function toggleFavorite(product) {
+            let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+            let index = favorites.findIndex(fav => fav.sku === product.sku);
+            if (index === -1) {
+                favorites.push(product);
+            } else {
+                favorites.splice(index, 1);
+            }
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+        }
+
+    </script>
+    <div class="body">
+        <script src="menu2.js"></script>
+        <div class="body">
+            <div role="main" class="main">
+                <section class="page-top">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h2>Retail Products</h2>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h2 class="shorter"><strong id="categoryTitle"></strong></h2>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <ul id="retailProductsDisplay" class="products product-thumb-info-list"
+                            style="list-style-type: none; margin-left: -3%;" data-plugin-masonry></ul>
+                    </div>
+                    <!-- <div id="favoriteMessage"></div> -->
+                    <hr class="tall">
+                </div>
+            </div>
+        </div>
+        <script src="../footer.js"></script>
+    </div>
+</body>
+
+</html>
+<!-- <span class="product-thumb-info-act-right">\
+    <span class="heart-icon" style="cursor: pointer;">&#x2661;</span>\
+</span> -->
+
+<!-- var heartIcons = document.querySelectorAll('.heart-icon');
+heartIcons.forEach(function (icon, index) {
+    icon.addEventListener('click', function () {
+        this.style.color = this.style.color === 'red' ? 'black' : 'red';
+        toggleFavorite(data[index]);
+        if (this.style.color == 'red'){
+            alert('The product has been added to your favourites.');
+        }else{
+            alert('The product has been removed from your favourites.');
+        }
+    }); -->
