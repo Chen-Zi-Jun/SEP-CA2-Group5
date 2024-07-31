@@ -47,8 +47,13 @@
             if (member.sla == 1) {
                 document.getElementById("serviceLevelAgreement").checked = true;
             }
+            // }, false);
 
-            // Get Bought Items
+            if (member.sla == 1) {
+                document.getElementById("serviceLevelAgreement").checked = true;
+            }
+
+            //Get Bought Items
             fetch(new Request('/api/getBoughtItem/' + member.id,
                 {
                     method: 'GET',
@@ -212,296 +217,6 @@
                                     //Check if password and repassword is the same
                                     document.getElementById("password").style.borderColor = "#E34234";
                                     document.getElementById("repassword").style.borderColor = "#E34234";
-                                    alert("The passwords do not match. Please key again.");
-                                    ok = false;
-                                } else if (password == repassword) {
-                                    //Check if password length is at least 8
-                                    if (password.length != 0 && password.length < 8) {
-                                        alert("Passwords too short. At least 8 characters");
-                                        ok = false;
-                                    }
-                                }
-                            } else {
-                                alert("Old password is not correct. Please try again.");
-                                document.getElementById('oldPassword').style.borderColor = "#E34234";
-                                ok = false;
-                            }
-                        }).catch(function (error) {
-                            console.log(error);
-                        });
-                }
-                if (ok) {
-                    let formData = new FormData(document.getElementById("profileForm"));
-                    let jsonObject = {};
-                    for (const [key, value] of formData.entries()) {
-                        jsonObject[key] = value;
-                    }
-                    jsonObject["id"] = member.id;
-                    await fetch(new Request('/api/updateMember',
-                        {
-                            method: 'PUT',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                Authorization: 'Bearer ' + authToken
-                            },
-                            body: JSON.stringify(jsonObject)
-                        })).then(function (response) {
-                            return response.json();
-                        }).then(function (data) {
-                            console.log(data);
-                            if (data.success) {
-                                alert("Account updated successfully!");
-                                member = data.member;
-                                sessionStorage.setItem('member', JSON.stringify(member));
-                                window.location.reload();
-                            } else {
-                                alert("There is an error in updating your profile. Please try again.");
-                            }
-                        }).catch(function (error) {
-                            console.log(error);
-                        });
-                }
-            }
-        }
-    </script>
-
-
-    <!-- <script>
-        var authToken = null;
-        var countryPrefix = localStorage.getItem('urlPrefix');
-        //get token from session
-        authToken = sessionStorage.getItem('token');
-        if (authToken == null || authToken == "") {
-            window.location.href = '/B/' + countryPrefix + '/memberLogin.html';
-        }
-        fetch(new Request('/api/checkToken',
-            {
-                method: 'GET',
-                headers: {
-                    Authorization: 'Bearer ' + authToken
-                }
-            })).then(function (response) {
-                return response.json();
-            }).then(function (data) {
-                if (!data.success) {
-                    window.location.href = '/B/' + countryPrefix + '/memberLogin.html';
-                }
-            }).catch(function (error) {
-                console.log(error);
-            });
-
-        var member = null;
-        console.log('member' + member)
-        document.addEventListener('DOMContentLoaded', function () {
-            member = JSON.parse(sessionStorage.getItem("member"));
-            console.log(member);
-
-            document.getElementById("name").value = member.name;
-            document.getElementById("email").value = member.email;
-            document.getElementById("phone").value = member.phone;
-            document.getElementById("country").value = member.city;
-            document.getElementById("address").value = member.address;
-            document.getElementById("securityQuestion").value = member.securityQuestion;
-            document.getElementById("securityAnswer").value = member.securityAnswer;
-            document.getElementById("age").value = member.age;
-            document.getElementById("income").value = member.income;
-
-
-            if (member.sla == 1) {
-                document.getElementById("serviceLevelAgreement").checked = true;
-            }
-            // }, false);
-
-            if (member.sla == 1) {
-                document.getElementById("serviceLevelAgreement").checked = true;
-            }
-
-            //Get Bought Items
-            fetch(new Request('/api/getBoughtItem/' + member.id,
-                {
-                    method: 'GET',
-                    headers: {
-                        Authorization: 'Bearer ' + authToken
-                    }
-                })).then(function (response) {
-                    return response.json();
-                }).then(function (boughtItem) {
-                    if (boughtItem == null || boughtItem == '') { //if member do not have any bought items
-                        document.getElementById("salesHistoryTab").innerHTML = '<h5 class="center">You do not have any sales history.</h5>';
-                    }
-                    else {
-                        var htmlTxt = '';
-                        var orderIdList = [];
-                        var overallPrice = 0;
-                        var finalPrice = 0;
-                        //get all order IDs
-                        for (i = 0; i < boughtItem.length; i++) {
-                            orderIdList[i] = boughtItem[i].id;
-                        }
-                        //unduplicate order IDs
-                        orderIdList = [...new Set(orderIdList)];
-                        var temp;
-                        var size = orderIdList.length;
-                        //sort order ID in ascending order
-                        for (i = 0; i < size - 1; i++) {
-                            for (j = 0; j < size - i - 1; j++) {
-                                if (orderIdList[j] > orderIdList[j + 1]) {
-                                    temp = orderIdList[j];
-                                    orderIdList[j] = orderIdList[j + 1];
-                                    orderIdList[j + 1] = temp;
-                                }
-                            }
-                        }
-
-                        htmlTxt += '<h5>Order #' + (1) + '</h5>';
-                        var counter = 0;
-                        //get bought items by order ID
-                        for (j = 0; j < boughtItem.length; j++) {
-
-                            if (boughtItem[j].id == orderIdList[0]) {
-                                var item = boughtItem[j];
-                                //display top level info
-                                if (counter == 0) {
-                                    let options = {
-                                        weekday: "long", year: "numeric", month: "long",
-                                        day: "numeric", hour: "2-digit", minute: "2-digit"
-                                    };
-                                    var datePurchased = (new Date(item.createddate)).toLocaleTimeString('en-us', options);
-                                    var deliveryDate = addWorkDays(new Date(item.createddate), 5);
-                                    htmlTxt += '\
-                                            <h6>Date Purchased: ' + datePurchased + '</h6>\
-                                            <h6>Estimated Delivery Date: ' + deliveryDate + '</h6>\
-                                            <h6 style="text-decoration:underline; font-weight:bold">Delivery Details:</h6>\
-                                            <h6>Address: ' + item.address + '</h6>\
-                                            <h6>Postal Code: ' + item.postalCode + '</h6>\
-                                            <h6>Name: ' + item.customerName + '</h6>\
-                                            <h6>Contact Number: ' + item.phone + '</h6>';
-                                    counter++;
-                                }
-                            }
-                        }
-                        //display table info
-                        htmlTxt += '\
-                                <div class="row">\
-                                    <div class="col-md-12">\
-                                        <div class="row featured-boxes">\
-                                            <div class="col-md-12">\
-                                                <div class="featured-box featured-box-secundary featured-box-cart">\
-                                                    <div class="box-content">\
-                                                        <table cellspacing="0" class="shop_table cart">\
-                                                            <thead>\
-                                                                <tr>\
-                                                                    <th class="product-thumbnail" style="width: 25%">Image</th>\
-                                                                    <th class="product-name" style="width: 38%">Product</th>\
-                                                                    <th class="product-price" style="width: 15%">Price</th>\
-                                                                    <th class="product-quantity" style="width: 15%">Quantity</th>\
-                                                                    <th class="product-subtotal" style="width: 15%">Subtotal</th>\
-                                                                </tr>\
-                                                            </thead>\
-                                                            <tbody>';
-                        for (y = 0; y < boughtItem.length; y++) {
-
-                            if (boughtItem[y].id == orderIdList[0]) {
-                                var product = boughtItem[y];
-                                htmlTxt += '\
-                                        <tr class="cart_table_item">\
-                                            <td class="product-thumbnail">\
-                                                <a href="/B/' + countryPrefix + '/furnitureProductDetails.html?sku=' + product.sku + '"><img width="100" height="100" alt="" class="img-responsive" src="' + product.imageUrl + '"></a>\
-                                            </td>\
-                                            <td class="product-name">\
-                                                <a class="productDetails" href="/B/' + countryPrefix + '/furnitureProductDetails.html?sku=' + product.sku + '">' + product.itemName + '</a>\
-                                            </td>\
-                                            <td class="product-price">\
-                                                $<span class="amount">' + product.retailPrice.toFixed(2) + '</span>\
-                                            </td>\
-                                            <td class="product-quantity">\
-                                                <span class="qty">' + product.quantity + '</span>\
-                                            </td>\
-                                            <td class="product-subtotal">\
-                                                $<span class="amount">' + product.retailPrice.toFixed(2) * product.quantity + '</span>\
-                                            </td>\
-                                        </tr>';
-                                finalPrice += product.retailPrice.toFixed(2) * product.quantity;
-                                overallPrice += product.retailPrice.toFixed(2) * product.quantity;
-                            }
-                        }
-                        htmlTxt += '\
-                                                                <tr>\
-                                                                    <td></td>\
-                                                                    <td></td>\
-                                                                    <td></td>\
-                                                                    <td class="product-subtotal" style="font-weight: bold; color: #cc3b33">Total:</td>\
-                                                                    <td class="product-subtotal" style="font-weight: bold">\
-                                                                        $<span class="amount" id="finalPrice" name="finalPrice">' + finalPrice + '</span>\
-                                                                    </td>\
-                                                                </tr>\
-                                                            </tbody>\
-                                                        </table>\
-                                                    </div>\
-                                                </div>\
-                                            </div>\
-                                        </div>\
-                                    </div>\
-                                </div>';
-                        finalPrice = 0;
-
-                        htmlTxt += '<h4 style="font-weight: bold; padding-left: 20px">Total Amount Spent: $' + overallPrice + '</h4>';
-                        document.getElementById("salesHistoryTab").innerHTML = htmlTxt;
-                    }
-                }).catch(function (error) {
-                    console.log(error);
-                });
-        },false);
-
-        function addWorkDays(startDate, days) {
-            var dow = startDate.getDay();
-            var daysToAdd = parseInt(days);
-            if (dow == 0)
-                daysToAdd++;
-            if (dow + daysToAdd >= 6) {
-                var remainingWorkDays = daysToAdd - (5 - dow);
-                daysToAdd += 2;
-                if (remainingWorkDays > 5) {
-                    daysToAdd += 2 * Math.floor(remainingWorkDays / 5);
-                    if (remainingWorkDays % 5 == 0)
-                        daysToAdd -= 2;
-                }
-            }
-            startDate.setDate(startDate.getDate() + daysToAdd);
-            var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            return startDate.toLocaleDateString("en-US", options);
-        }
-
-        async function submitForm(email) {
-            var oldPassword = document.getElementById('oldPassword').value;
-            var password = document.getElementById("password").value;
-            var repassword = document.getElementById("repassword").value;
-            var ok = true;
-            console.log(oldPassword)
-            if (document.getElementById("profileForm").checkValidity()) {
-                if (oldPassword != "" && password != "" && repassword != "") {
-                    var memberData = {
-                        id: member.id,
-                        password: oldPassword
-                    };
-                    console.log(memberData);
-                    await fetch(new Request('/api/verifyPassword',
-                        {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                Authorization: 'Bearer ' + authToken
-                            },
-                            body: JSON.stringify(memberData)
-                        })).then(function (response) {
-                            return response.json();
-                        }).then(function (data) {
-                            console.log(data);
-                            if (data.success) {
-                                if (password != repassword) {
-                                    //Check if password and repassword is the same
-                                    document.getElementById("password").style.borderColor = "#E34234";
-                                    document.getElementById("repassword").style.borderColor = "#E34234";
                                     alert("Passwords do not match. Please key again.");
                                     ok = false;
                                 } else if (password == repassword) {
@@ -566,8 +281,12 @@
         function pdpaWindow() {
             var myWindow = window.open("pdpa.html");
         }
-    </script> -->
-
+        /* Not Allow Spcace Type in textbox */
+        function AvoidSpace(event) {
+            var k = event ? event.which : window.event.keyCode;
+            if (k == 32) return false;
+        }
+    </script>
     <script src="menu2.js"></script>
     <div role="main" class="main">
         <section class="page-top">
@@ -601,18 +320,16 @@
                                     <h4>Personal Information</h4>
                                     <div class="form-group">
                                         <label>Name</label>
-                                        <input class="form-control" required="true" id="name" type="text"
-                                            style="color: gray;" />
+                                        <input class="form-control" required="true" id="name" type="text" style="color: gray;"/>
                                     </div>
                                     <div class="form-group">
                                         <label>E-mail Address</label>
-                                        <input class="form-control" required="true" id="email" disabled
-                                            style="color: gray;" />
+                                        <input class="form-control" required="true" id="email" disabled style="color: gray;"/>
                                     </div>
                                     <div class="form-group">
                                         <label>Phone</label>
                                         <input class="form-control" required="true" pattern="[0-9]*"
-                                            title="Numbers only" type="text" id="phone" style="color: gray;" />
+                                            title="Numbers only" type="text" id="phone" style="color: gray;"/>
                                     </div>
                                     <div class="form-group">
                                         <label>Country</label>
@@ -870,8 +587,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label>Address</label>
-                                        <input class="form-control" type="text" required="true" id="address"
-                                            style="color: gray;" />
+                                        <input class="form-control" type="text" required="true" id="address" style="color: gray;"/>
                                     </div>
                                     <div class="form-group">
                                         <label>Set Challenge Question</label>
@@ -880,22 +596,21 @@
                                             <option value="2">What is your first pet's name?</option>
                                             <option value="3">What is your favourite animal?</option>
                                         </select>
-                                        <input class="form-control" type="text" required="true" id="securityAnswer"
-                                            style="color: gray;" />
+                                        <input class="form-control" type="text" required="true" id="securityAnswer" style="color: gray;"/>
                                     </div>
                                     <div class="form-group">
                                         <label>Age</label>
                                         <input class="form-control" id="age" type="text" required="true"
-                                            pattern="[0-9]*" title="Numbers only" style="color: gray;" />
+                                            pattern="[0-9]*" title="Numbers only" style="color: gray;"/>
                                     </div>
                                     <div class="form-group">
                                         <label>Income per annum (in USD)</label>
                                         <input class="form-control" id="income" type="text" required="true"
-                                            pattern="[0-9]*" title="Money without cents" style="color: gray;" />
+                                            pattern="[0-9]*" title="Money without cents" style="color: gray;"/>
                                     </div>
                                     <div class="form-group">
                                         <input style="cursor: pointer" type="checkbox" id="serviceLevelAgreement"
-                                            value="agreement" style="color: gray;" />
+                                            value="agreement" style="color: gray;"/>
 
                                         Allow us to use your particulars to serve you better?
                                         <br />Checking the box above indicates that you agree to our <a
@@ -906,15 +621,15 @@
                                     <h4>Change Password</h4>
                                     <div class="form-group">
                                         <label>Old Password (leave blank unless setting a new password).</label>
-                                        <input class="form-control" type="password" id="oldPassword">
+                                        <input class="form-control" type="password" id="oldPassword" maxlength=8 onkeypress="return AvoidSpace(event);">
                                     </div>
                                     <div class="form-group">
                                         <label>New Password<br />Password to be at least 8 characters long.</label>
-                                        <input class="form-control" type="password" id="password">
+                                        <input class="form-control" type="password" id="password" maxlength=8 onkeypress="return AvoidSpace(event);">
                                     </div>
                                     <div class="form-group">
                                         <label>Re-enter New Password</label>
-                                        <input class="form-control" type="password" id="repassword">
+                                        <input class="form-control" type="password" id="repassword"  maxlength=8 onkeypress="return AvoidSpace(event);">
                                     </div>
                                     <div class="panel-footer" style="padding-bottom: 0px;">
                                         <div class="row">
